@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Case App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --primary-bg: #0F0F0F;
+            --card-bg: #101010;
+            --wheel-bg: #384653;
+            --menu-bg: rgba(20, 20, 20, 0.95);
+            --text-color: #FFFFFF;
+            --accent-color: #FFFFFF;
+            --price-color: #FFFFFF;
+            --search-bg: rgba(255, 255, 255, 0.1);
+            --success-color: #4CAF50;
+            --warning-color: #CD1A03;
+            --button-bg: rgba(255, 255, 255, 0.1);
+            --demo-color: #3a8cff;
+            --tab-active: rgba(20, 20, 20, 0.2);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            padding-bottom: 80px;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            flex-direction: column;
+            transition: opacity 0.5s ease;
+        }
+        
+        .splash-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent-color), #0066cc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        .splash-logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: var(--primary-bg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-name {
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .balance-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 4px 8px 4px 12px;
+        }
+        
+        .balance {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+        }
+        
+        .coin-icon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+        }
+        
+        .deposit-btn {
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 700;
+        }
+        
+        .deposit-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        /* Cases Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            height: 300px;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card-image-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .card-image {
+            width: 100%;
+            height: 160px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover .card-image {
+            transform: scale(1.05);
+        }
+        
+        .card-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            z-index: 1;
+            background-color: var(--accent-color);
+            color: #000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-details {
+            padding: 12px;
+            text-align: center;
+            min-height: 60px;
+        }
+        
+        .card-name {
+            font-weight: 700;
+            font-size: 14px;
+            margin: 0 0 8px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .price-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: #1E1E1E;
+            border-radius: 8px;
+            padding: 8px 12px;
+            width: fit-content;
+            margin: 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-price {
+            color: var(--price-color);
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        /* Case Opening Modal */
+        .case-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--primary-bg);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .case-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .case-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        
+        .case-close {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+            background: none;
+            border: none;
+            font-weight: 700;
+            transition: color 0.2s;
+        }
+        
+        .case-close:hover {
+            color: var(--accent-color);
+        }
+        
+        .cards-strip-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .cards-strip {
+            display: flex;
+            height: 100%;
+            transition: transform 0.1s linear;
+        }
+        
+        .card-strip-item {
+            min-width: 160px;
+            height: 100%;
+            margin: 0 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+        }
+        
+        .card-strip-item.highlight {
+            animation: highlight-item 1.5s ease-in-out;
+            box-shadow: 0 0 15px var(--accent-color);
+            transform: scale(1.05);
+        }
+        
+        @keyframes highlight-item {
+            0%, 100% { transform: scale(1); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+            50% { transform: scale(1.08); box-shadow: 0 0 20px var(--accent-color); }
+        }
+        
+        .card-strip-image {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+        
+        .card-strip-name {
+            margin-top: 8px;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 600;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Указатели */
+        .pointer {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 15px;
+          height: 7.5px;
+          z-index: 10;
+        }
+
+        .pointer.bottom {
+          bottom: 0;
+          border-top: none;
+          border-bottom: 7.5px solid var(--accent-color);
+          border-left: 7.5px solid transparent;
+          border-right: 7.5px solid transparent;
+        }
+
+        .pointer.top {
+          top: 0;
+          border-bottom: none;
+          border-top: 7.5px solid var(--accent-color);
+          border-left: 7.5px solid transparent;
+          border-right: 7.5px solid transparent;
+        }
+
+        .pointer.top::after,
+        .pointer.bottom::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 60px;
+          height: 3px;
+          background: linear-gradient(to right, transparent, var(--accent-color), transparent);
+        }
+
+        .pointer.top::after {
+          top: -5px;
+        }
+
+        .pointer.bottom::after {
+          bottom: -5px;
+        }
+        
+        .spin-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 0 20px 0;
+        }
+        
+        .spin-btn {
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 0;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.3);
+        }
+        
+        .spin-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #fff;
+        }
+        
+        .spin-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        
+        .demo-toggle {
+            display: flex;
+            align-items: center;
+            margin-top: 12px;
+            gap: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .demo-toggle input {
+            appearance: none;
+            width: 40px;
+            height: 20px;
+            background: #555;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .demo-toggle input:checked {
+            background: var(--demo-color);
+        }
+        
+        .demo-toggle input::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        
+        .demo-toggle input:checked::before {
+            transform: translateX(20px);
+        }
+        
+        .possible-items-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 20px 0 10px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .possible-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            padding: 0 10px;
+        }
+        
+        @media (min-width: 768px) {
+            .possible-items {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .possible-item {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            aspect-ratio: 1/1;
+        }
+        
+        .possible-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .possible-item-image {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+        
+        .possible-item-name {
+            font-size: 11px;
+            text-align: center;
+            font-weight: 600;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .possible-item-price {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #1E1E1E;
+            border-radius: 8px;
+            padding: 4px 8px;
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Won Item Modal */
+        .won-item-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .won-item-content {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px 20px;
+            width: 100%;
+            max-width: 280px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        
+        .won-item-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .won-item-image {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            margin: 0 auto 15px;
+            animation: won-item-pulse 2s infinite;
+        }
+        
+        @keyframes won-item-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        
+        .won-item-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .won-item-price {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            background: #1E1E1E;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin: 0 auto;
+            width: fit-content;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .won-item-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .won-item-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+        }
+        
+        .won-item-btn.keep {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+        
+        .won-item-btn.sell {
+            background-color: var(--accent-color);
+            color: #000;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.3);
+        }
+        
+        .won-item-btn.sell:hover {
+            background-color: #e0e0e0;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--card-bg);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            font-weight: 700;
+            display: none;
+            animation: slideIn 0.3s, fadeOut 0.5s 2.5s;
+        }
+        
+        @keyframes slideIn {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        /* Меню пополнения */
+        .deposit-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .deposit-menu.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .deposit-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px 20px;
+            width: 80%;
+            max-width: 300px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        
+        .deposit-title {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .deposit-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .deposit-option {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .deposit-option:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+        
+        .deposit-option.active {
+            background: var(--accent-color);
+            color: #000;
+            font-weight: 700;
+            border-color: var(--accent-color);
+        }
+        
+        .deposit-amount {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .deposit-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .deposit-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+        
+        .deposit-btn.cancel {
+            background: rgba(255,255,255,0.1);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+        
+        .deposit-btn.confirm {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.3);
+        }
+        
+        .deposit-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .telegram-only {
+            text-align: center;
+            padding: 15px;
+            color: var(--warning-color);
+            font-weight: 700;
+            display: none;
+        }
+        
+        /* Responsive */
+        @media (max-width: 360px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                height: 280px;
+            }
+            
+            .card-image {
+                height: 140px;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/2583/2583461.png" alt="Logo">
+        </div>
+        <h2>CaseX</h2>
+    </div>
+    
+    <div class="header">
+        <div class="user-info">
+            <div class="user-avatar" id="user-avatar">U</div>
+            <div class="user-name" id="user-name">User</div>
+        </div>
+        <div class="balance-container">
+            <div class="balance">
+                <span id="balance-value">500</span>
+                <img src="stars.png" class="coin-icon" alt="Coin">
+            </div>
+            <button class="deposit-btn" id="deposit-btn">+</button>
+        </div>
+    </div>
+    
+    <!-- Уведомление для пользователей вне Telegram -->
+    <div class="telegram-only" id="telegram-only">
+        Для работы приложения и пополнения баланса откройте его в Telegram
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+    
+    <!-- Gifts Section (Кейсы) -->
+    <div class="section active" id="gifts-section">
+        <div class="cards-grid" id="cases-grid"></div>
+    </div>
+    
+    <!-- Меню пополнения -->
+    <div class="deposit-menu" id="deposit-menu">
+        <div class="deposit-content">
+            <div class="deposit-title">Пополнить баланс</div>
+            <div class="deposit-options">
+                <div class="deposit-option" data-amount="100">
+                    <div class="deposit-amount">100</div>
+                    <img src="stars.png" style="width:20px;height:20px;margin-top:5px;" alt="Stars">
+                </div>
+                <div class="deposit-option" data-amount="500">
+                    <div class="deposit-amount">500</div>
+                    <img src="stars.png" style="width:20px;height:20px;margin-top:5px;" alt="Stars">
+                </div>
+                <div class="deposit-option" data-amount="1000">
+                    <div class="deposit-amount">1000</div>
+                    <img src="stars.png" style="width:20px;height:20px;margin-top:5px;" alt="Stars">
+                </div>
+                <div class="deposit-option" data-amount="2000">
+                    <div class="deposit-amount">2000</div>
+                    <img src="stars.png" style="width:20px;height:20px;margin-top:5px;" alt="Stars">
+                </div>
+            </div>
+            <div class="deposit-buttons">
+                <div class="deposit-btn cancel" id="cancel-deposit">Отмена</div>
+                <div class="deposit-btn confirm" id="confirm-deposit">Пополнить</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Case Opening Modal -->
+    <div class="case-modal" id="case-modal">
+        <div class="case-header">
+            <div class="case-title" id="case-modal-title">Открытие кейса</div>
+            <button class="case-close" id="close-case-modal">&times;</button>
+        </div>
+        
+        <div class="cards-strip-container">
+            <div class="cards-strip" id="cards-strip"></div>
+            <div class="pointer top"></div>
+            <div class="pointer bottom"></div>
+        </div>
+        
+        <div class="spin-container">
+            <button class="spin-btn" id="spin-btn">Открыть за <span id="spin-price">0</span> <img src="stars.png" style="width:16px;height:16px;" alt="Coin"></button>
+            <div class="demo-toggle">
+                <input type="checkbox" id="demo-mode" checked>
+                <label for="demo-mode">Демо-режим</label>
+            </div>
+        </div>
+        
+        <div class="possible-items-title" id="possible-items-title">Возможные предметы</div>
+        <div class="possible-items" id="possible-items"></div>
+    </div>
+    
+    <!-- Won Item Modal -->
+    <div class="won-item-modal" id="won-item-modal">
+        <div class="won-item-content">
+            <div class="won-item-title" id="won-item-title">Поздравляем!</div>
+            <img src="" class="won-item-image" id="won-item-image" alt="Выигранный предмет">
+            <div class="won-item-name" id="won-item-name"></div>
+            <div class="won-item-price">
+                <span id="won-item-value">0</span>
+                <img src="stars.png" style="width:20px;height:20px;" alt="Coin">
+            </div>
+            <div class="won-item-buttons">
+                <button class="won-item-btn keep" id="keep-item">Оставить</button>
+                <button class="won-item-btn sell" id="sell-item">Продать</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Telegram Web App инициализация
+            let tg;
+            let isTelegram = false;
+            
+            try {
+                tg = window.Telegram.WebApp;
+                if (tg) {
+                    tg.expand();
+                    isTelegram = true;
+                    
+                    // Устанавливаем данные пользователя
+                    const user = tg.initDataUnsafe.user;
+                    if (user) {
+                        document.getElementById('user-name').textContent = user.first_name || 'User';
+                        document.getElementById('user-avatar').textContent = user.first_name ? user.first_name[0] : 'U';
+                    }
+                }
+            } catch (e) {
+                console.log("Not in Telegram environment");
+            }
+            
+            // Показываем предупреждение, если не в Telegram
+            if (!isTelegram) {
+                document.getElementById('telegram-only').style.display = 'block';
+            }
+            
+            // Скрываем splash screen
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                }, 500);
+            }, 1000);
+            
+            // База данных кейсов
+            const casesDatabase = [
+                { 
+                    id: 1, 
+                    name: "God XCase", 
+                    price: 699, 
+                    image: "https://cdn-icons-png.flaticon.com/512/2230/2230324.png",
+                    badge: "NFT",
+                    items: [
+                        { id: 1, name: "Lol Pop", image: "https://cdn-icons-png.flaticon.com/512/2230/2230324.png", chance: 10, value: 989 },
+                        { id: 2, name: "Heart", image: "https://cdn-icons-png.flaticon.com/512/833/833472.png", chance: 30, value: 15 },
+                        { id: 3, name: "Teddy", image: "https://cdn-icons-png.flaticon.com/512/263/263142.png", chance: 30, value: 15 },
+                        { id: 4, name: "Golden Ring", image: "https://cdn-icons-png.flaticon.com/512/2583/2583461.png", chance: 15, value: 350 },
+                        { id: 5, name: "Diamond", image: "https://cdn-icons-png.flaticon.com/512/2583/2583471.png", chance: 10, value: 750 },
+                        { id: 6, name: "Silver Coin", image: "https://cdn-icons-png.flaticon.com/512/2583/2583477.png", chance: 5, value: 1500 }
+                    ]
+                },
+                { 
+                    id: 2, 
+                    name: "Ghost Case", 
+                    price: 499, 
+                    image: "https://cdn-icons-png.flaticon.com/512/2583/2583434.png",
+                    badge: "Rare",
+                    items: [
+                        { id: 7, name: "Ghostly Cloak", image: "https://cdn-icons-png.flaticon.com/512/2583/2583434.png", chance: 25, value: 900 },
+                        { id: 8, name: "Spectral Torch", image: "https://cdn-icons-png.flaticon.com/512/2583/2583445.png", chance: 35, value: 750 },
+                        { id: 9, name: "Phantom Ring", image: "https://cdn-icons-png.flaticon.com/512/2583/2583461.png", chance: 20, value: 600 },
+                        { id: 10, name: "Shadow Dagger", image: "https://cdn-icons-png.flaticon.com/512/2583/2583440.png", chance: 15, value: 1100 },
+                        { id: 11, name: "Ethereal Amulet", image: "https://cdn-icons-png.flaticon.com/512/2583/2583451.png", chance: 5, value: 2500 }
+                    ]
+                },
+                { 
+                    id: 3, 
+                    name: "Dragon Chest", 
+                    price: 899, 
+                    image: "https://cdn-icons-png.flaticon.com/512/2583/2583441.png",
+                    badge: "Epic",
+                    items: [
+                        { id: 12, name: "Dragon Sword", image: "https://cdn-icons-png.flaticon.com/512/2583/2583441.png", chance: 15, value: 1200 },
+                        { id: 13, name: "Fire Shield", image: "https://cdn-icons-png.flaticon.com/512/2583/2583435.png", chance: 25, value: 850 },
+                        { id: 14, name: "Scale Armor", image: "https://cdn-icons-png.flaticon.com/512/2583/2583431.png", chance: 30, value: 700 },
+                        { id: 15, name: "Dragon Egg", image: "https://cdn-icons-png.flaticon.com/512/2583/2583450.png", chance: 20, value: 1500 },
+                        { id: 16, name: "Ancient Scroll", image: "https://cdn-icons-png.flaticon.com/512/2583/2583466.png", chance: 10, value: 3000 }
+                    ]
+                }
+            ];
+            
+            // Игровые данные
+            let userBalance = localStorage.getItem('userBalance') ? parseInt(localStorage.getItem('userBalance')) : 1000;
+            let selectedCase = null;
+            let isSpinning = false;
+            let stripItems = [];
+            let allPossibleItems = [];
+            let lastWonItem = null;
+            let demoMode = true;
+            let selectedAmount = 0;
+            
+            // Инициализация приложения
+            initApp();
+            
+            function initApp() {
+                updateBalance();
+                loadCases();
+                setupEventListeners();
+                
+                if (isTelegram) {
+                    Telegram.WebApp.onEvent('invoiceClosed', handleInvoiceClosed);
+                }
+            }
+            
+            function updateBalance() {
+                document.getElementById('balance-value').textContent = userBalance;
+            }
+            
+            function loadCases() {
+                const casesGrid = document.getElementById('cases-grid');
+                casesGrid.innerHTML = '';
+                
+                casesDatabase.forEach(caseItem => {
+                    const caseElement = document.createElement('div');
+                    caseElement.className = 'card';
+                    caseElement.setAttribute('data-id', caseItem.id);
+                    
+                    caseElement.innerHTML = `
+                        <div class="card-image-container">
+                            <div class="card-badge">${caseItem.badge}</div>
+                            <img src="${caseItem.image}" class="card-image" alt="${caseItem.name}">
+                        </div>
+                        <div class="card-details">
+                            <div class="card-name">${caseItem.name}</div>
+                            <div class="price-container">
+                                <span class="card-price">${caseItem.price}</span>
+                                <img src="stars.png" class="coin-icon" alt="Coin">
+                            </div>
+                        </div>
+                    `;
+                    
+                    casesGrid.appendChild(caseElement);
+                });
+            }
+            
+            function setupEventListeners() {
+                document.getElementById('cases-grid').addEventListener('click', function(e) {
+                    const card = e.target.closest('.card');
+                    if (card && !isSpinning) {
+                        const caseId = parseInt(card.getAttribute('data-id'));
+                        selectedCase = casesDatabase.find(c => c.id === caseId);
+                        
+                        if (selectedCase) {
+                            openCaseModal(selectedCase);
+                        }
+                    }
+                });
+                
+                document.getElementById('deposit-btn').addEventListener('click', function() {
+                    if (!isTelegram) {
+                        showNotification("Пополнение доступно только в Telegram");
+                        return;
+                    }
+                    document.getElementById('deposit-menu').classList.add('active');
+                });
+                
+                document.getElementById('cancel-deposit').addEventListener('click', function() {
+                    document.getElementById('deposit-menu').classList.remove('active');
+                    resetDepositOptions();
+                });
+                
+                document.querySelectorAll('.deposit-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        document.querySelectorAll('.deposit-option').forEach(opt => {
+                            opt.classList.remove('active');
+                        });
+                        
+                        this.classList.add('active');
+                        selectedAmount = parseInt(this.getAttribute('data-amount'));
+                    });
+                });
+                
+                document.getElementById('confirm-deposit').addEventListener('click', function() {
+                    if (selectedAmount > 0) {
+                        createInvoice(selectedAmount);
+                        document.getElementById('deposit-menu').classList.remove('active');
+                        resetDepositOptions();
+                    } else {
+                        showNotification("Выберите сумму пополнения!");
+                    }
+                });
+                
+                document.getElementById('close-case-modal').addEventListener('click', function() {
+                    if (!isSpinning) {
+                        document.getElementById('case-modal').style.display = 'none';
+                    }
+                });
+                
+                const spinBtn = document.getElementById('spin-btn');
+                if (spinBtn) {
+                    spinBtn.addEventListener('click', function() {
+                        demoMode = document.getElementById('demo-mode').checked;
+                        
+                        if (!isSpinning && (demoMode || userBalance >= selectedCase.price)) {
+                            spinStrip();
+                        } else if (!demoMode && userBalance < selectedCase.price) {
+                            showNotification("Недостаточно средств!");
+                        }
+                    });
+                }
+                
+                document.getElementById('sell-item').addEventListener('click', function() {
+                    if (!lastWonItem) return;
+                    
+                    const sellPrice = lastWonItem.value || selectedCase.price;
+                    userBalance += sellPrice;
+                    updateBalance();
+                    localStorage.setItem('userBalance', userBalance);
+                    
+                    showNotification(`Предмет продан за ${sellPrice} монет!`);
+                    document.getElementById('won-item-modal').style.display = 'none';
+                    lastWonItem = null;
+                });
+                
+                document.getElementById('keep-item').addEventListener('click', function() {
+                    document.getElementById('won-item-modal').style.display = 'none';
+                    showNotification(`Предмет "${lastWonItem.name}" добавлен в коллекцию!`);
+                    lastWonItem = null;
+                });
+            }
+            
+            function resetDepositOptions() {
+                document.querySelectorAll('.deposit-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                selectedAmount = 0;
+            }
+            
+            function createInvoice(amount) {
+                if (!isTelegram) return;
+                
+                try {
+                    const invoice = {
+                        title: "Пополнение баланса",
+                        description: `Пополнение на ${amount} звезд в приложении CaseX`,
+                        currency: "XTR",
+                        prices: [{ 
+                            label: `${amount} звезд`, 
+                            amount: amount * 100
+                        }],
+                        payload: JSON.stringify({
+                            type: 'deposit',
+                            amount: amount,
+                            userId: tg.initDataUnsafe.user?.id,
+                            timestamp: Date.now()
+                        })
+                    };
+                    
+                    tg.openInvoice(invoice, (status) => {
+                        if (status === 'paid') {
+                            userBalance += amount;
+                            updateBalance();
+                            localStorage.setItem('userBalance', userBalance);
+                            showNotification(`Баланс пополнен на ${amount} звезд!`);
+                        } else if (status === 'failed') {
+                            showNotification("Оплата не прошла");
+                        } else if (status === 'cancelled') {
+                            showNotification("Оплата отменена");
+                        }
+                    });
+                } catch (error) {
+                    console.error('Invoice error:', error);
+                    showNotification("Ошибка создания платежа");
+                }
+            }
+            
+            function handleInvoiceClosed(eventData) {
+                if (eventData.status === 'paid') {
+                    try {
+                        const payload = JSON.parse(eventData.payload);
+                        const amount = parseInt(payload.amount);
+                        
+                        if (!isNaN(amount)) {
+                            userBalance += amount;
+                            updateBalance();
+                            localStorage.setItem('userBalance', userBalance);
+                            showNotification(`Баланс пополнен на ${amount} звезд!`);
+                        }
+                    } catch (e) {
+                        console.error("Error processing payment:", e);
+                        showNotification("Ошибка обработки платежа");
+                    }
+                } else if (eventData.status === 'failed') {
+                    showNotification("Платеж не прошел");
+                } else if (eventData.status === 'cancelled') {
+                    showNotification("Платеж отменен");
+                }
+            }
+            
+            function openCaseModal(caseData) {
+                document.getElementById('case-modal-title').textContent = "Открытие кейса: " + caseData.name;
+                document.getElementById('spin-price').textContent = caseData.price;
+                
+                const spinBtn = document.getElementById('spin-btn');
+                if (spinBtn) {
+                    spinBtn.innerHTML = `Открыть за <span id="spin-price">${caseData.price}</span> <img src="stars.png" style="width:16px;height:16px;" alt="Coin">`;
+                    spinBtn.disabled = false;
+                }
+                
+                const cardsStrip = document.getElementById('cards-strip');
+                cardsStrip.innerHTML = '';
+                
+                stripItems = [];
+                caseData.items.forEach(item => {
+                    if (item.chance > 0) {
+                        for (let i = 0; i < item.chance; i++) {
+                            stripItems.push(item);
+                        }
+                    }
+                });
+                
+                shuffleArray(stripItems);
+                
+                for (let i = 0; i < 3; i++) {
+                    stripItems.forEach(item => {
+                        const stripItem = document.createElement('div');
+                        stripItem.className = 'card-strip-item';
+                        stripItem.innerHTML = `
+                            <img src="${item.image}" class="card-strip-image" alt="${item.name}">
+                            <div class="card-strip-name">${item.name}</div>
+                        `;
+                        cardsStrip.appendChild(stripItem);
+                    });
+                }
+                
+                const possibleItemsContainer = document.getElementById('possible-items');
+                possibleItemsContainer.innerHTML = '';
+                
+                allPossibleItems = [...new Set(caseData.items.map(item => item.id))]
+                    .map(id => caseData.items.find(item => item.id === id));
+                
+                allPossibleItems.forEach(item => {
+                    const possibleItem = document.createElement('div');
+                    possibleItem.className = 'possible-item';
+                    possibleItem.innerHTML = `
+                        <img src="${item.image}" class="possible-item-image" alt="${item.name}">
+                        <div class="possible-item-name">${item.name}</div>
+                        <div class="possible-item-price">
+                            <span>${item.value}</span>
+                            <img src="stars.png" style="width:14px;height:14px;" alt="Coin">
+                        </div>
+                    `;
+                    possibleItemsContainer.appendChild(possibleItem);
+                });
+                
+                document.getElementById('case-modal').style.display = 'flex';
+            }
+            
+            function spinStrip() {
+                if (isSpinning) return;
+                
+                isSpinning = true;
+                if (!demoMode) {
+                    userBalance -= selectedCase.price;
+                    updateBalance();
+                    localStorage.setItem('userBalance', userBalance);
+                }
+                
+                const cardsStrip = document.getElementById('cards-strip');
+                const spinBtn = document.getElementById('spin-btn');
+                if (spinBtn) spinBtn.disabled = true;
+                
+                const randomItem = getRandomItem(selectedCase.items);
+                lastWonItem = randomItem;
+                
+                const itemIndex = stripItems.findIndex(item => item.id === randomItem.id);
+                
+                const itemWidth = 160 + 12;
+                const containerWidth = cardsStrip.parentElement.clientWidth;
+                const containerCenter = containerWidth / 2;
+                const itemCenter = (itemIndex * itemWidth) + (itemWidth / 2);
+                
+                const targetPosition = containerCenter - itemCenter - (stripItems.length * itemWidth);
+                
+                cardsStrip.style.transition = 'none';
+                cardsStrip.style.transform = 'translateX(0)';
+                
+                setTimeout(() => {
+                    cardsStrip.style.transition = 'transform 4s cubic-bezier(0.1, 0.5, 0.3, 1)';
+                    cardsStrip.style.transform = `translateX(${targetPosition}px)`;
+                }, 50);
+                
+                setTimeout(() => {
+                    isSpinning = false;
+                    if (spinBtn) spinBtn.disabled = false;
+                    
+                    highlightWonItem(randomItem);
+                    
+                    setTimeout(() => {
+                        showWonItem(randomItem);
+                    }, 500);
+                }, 4050);
+            }
+            
+            function highlightWonItem(item) {
+                const stripItems = document.querySelectorAll('.card-strip-item');
+                stripItems.forEach((stripItem) => {
+                    const itemName = stripItem.querySelector('.card-strip-name').textContent;
+                    if (itemName === item.name) {
+                        stripItem.classList.add('highlight');
+                        setTimeout(() => {
+                            stripItem.classList.remove('highlight');
+                        }, 1500);
+                    }
+                });
+            }
+            
+            function showWonItem(item) {
+                document.getElementById('won-item-image').src = item.image;
+                document.getElementById('won-item-name').textContent = item.name;
+                document.getElementById('won-item-value').textContent = item.value;
+                
+                document.getElementById('won-item-modal').style.display = 'flex';
+                
+                if (demoMode) {
+                    showNotification(`Демо-режим: вы выиграли ${item.name}!`);
+                }
+            }
+            
+            function showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.style.display = 'block';
+                
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+            
+            function getRandomItem(items) {
+                const totalChance = items.reduce((sum, item) => sum + item.chance, 0);
+                let random = Math.random() * totalChance;
+                
+                for (const item of items) {
+                    if (random < item.chance) {
+                        return item;
+                    }
+                    random -= item.chance;
+                }
+                
+                return items[0];
+            }
+            
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+        });
+    </script>
+</body>
+</html>
